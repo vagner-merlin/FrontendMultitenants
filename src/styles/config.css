@@ -1,0 +1,193 @@
+/* Variables CSS que se actualizan dinámicamente */
+:root {
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1e40af;
+  --base-font-size: 16px;
+  --sidebar-width: 220px;
+  --ui-padding: 12px;
+  --ui-gap: 8px;
+  --ui-border-radius: 8px;
+  --animations: all 0.2s ease;
+}
+
+/* Aplicar variables a componentes existentes */
+.sidebar {
+  width: var(--sidebar-width) !important;
+}
+
+.ui-btn, .card, .ui-input, .ui-select {
+  border-radius: var(--ui-border-radius);
+  transition: var(--animations);
+}
+
+.nav-link.active {
+  background: linear-gradient(90deg, 
+    rgba(var(--accent-primary-rgb), 0.15), 
+    rgba(var(--accent-primary-rgb), 0.15)
+  );
+  border-color: var(--accent-primary);
+}
+
+.ui-btn--primary {
+  background: var(--accent-primary);
+  border-color: var(--accent-secondary);
+}
+
+/* Configuración de página */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.config-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: var(--ui-border-radius);
+  padding: 20px;
+}
+
+.config-section__title {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.config-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: var(--animations);
+}
+
+.config-option:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.config-option input[type="radio"] {
+  margin: 0;
+}
+
+.config-option__label {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.config-colors {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.config-color {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: var(--animations);
+}
+
+.config-color[data-color="blue"] { background: #3b82f6; }
+.config-color[data-color="purple"] { background: #8b5cf6; }
+.config-color[data-color="green"] { background: #10b981; }
+.config-color[data-color="orange"] { background: #f59e0b; }
+.config-color[data-color="pink"] { background: #ec4899; }
+
+.config-color--active {
+  border-color: #e2e8f0;
+  transform: scale(1.1);
+}
+
+.config-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.config-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.config-toggle__slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  transition: var(--animations);
+}
+
+.config-toggle__slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: var(--animations);
+}
+
+.config-toggle input:checked + .config-toggle__slider {
+  background: var(--accent-primary);
+}
+
+.config-toggle input:checked + .config-toggle__slider::before {
+  transform: translateX(20px);
+}
+
+.config-toggle__label {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+.config-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+/* Temas */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme="light"] .app-shell {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .sidebar {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .config-colors {
+    justify-content: center;
+  }
+}
