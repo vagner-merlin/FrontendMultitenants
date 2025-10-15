@@ -32,19 +32,31 @@ const fillDomainFromEmail = (
   }
 };
 
-/* Extender localmente el tipo para añadir campos extras sin tocar tenant/types */
+/* Basado en las tablas del diagrama: institucion_SaaS + auth_user */
 type ExtendedCompanySignupInput = CompanySignupInput & {
-  razon_social?: string;
-  tax_id?: string;
-  industry?: string;
-  address?: string;
-  city?: string;
-  timezone?: string;
-  currency?: string;
-  language?: string;
-  admin_last_name?: string;
-  admin_role?: string;
-  plan?: string;
+  // Campos de institucion_SaaS
+  razon_social: string;
+  email_contacto: string;
+  fecha_registro: string;
+  nombre: string;
+  logo_url?: string;
+  
+  // Campos adicionales del dominio
+  id_organization: string;
+  subdomain: string;
+  is_primary: boolean;
+  
+  // Campos de auth_user (administrador)
+  password: string;
+  last_login?: string;
+  is_superuser: boolean;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  is_staff: boolean;
+  is_active: boolean;
+  date_joined: string;
 };
 
 const CompanySignupPage: React.FC = () => {
@@ -66,24 +78,37 @@ const CompanySignupPage: React.FC = () => {
   const [showPass, setShowPass] = useState<boolean>(false);
 
   const [form, setForm] = useState<ExtendedCompanySignupInput>({
+    // Campos base de CompanySignupInput
     company_name: "",
     domain: "",
     slug: "",
     admin_name: "",
-    admin_last_name: "",
     admin_email: "",
-    password: "",
     phone: "",
+    
+    // Campos de institucion_SaaS
     razon_social: "",
-    tax_id: "",
-    industry: "",
-    address: "",
-    city: "",
-    timezone: "UTC",
-    currency: "USD",
-    language: "en",
-    admin_role: "Administrador",
-    plan: "",
+    email_contacto: "",
+    fecha_registro: new Date().toISOString().split('T')[0],
+    nombre: "",
+    logo_url: "",
+    
+    // Campos del dominio
+    id_organization: "",
+    subdomain: "",
+    is_primary: true,
+    
+    // Campos de auth_user (administrador)
+    password: "",
+    last_login: "",
+    is_superuser: false,
+    username: "",
+    first_name: "",
+    last_name: "",
+    email: "",
+    is_staff: true,
+    is_active: true,
+    date_joined: new Date().toISOString(),
   });
 
   useEffect(() => {

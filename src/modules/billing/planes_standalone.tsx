@@ -1,5 +1,5 @@
-// src/modules/marketing/LandingPage.tsx
-import React, { useEffect, useState } from "react";
+// src/modules/billing/planes_standalone.tsx
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "../../styles/landing.css";
 
@@ -24,89 +24,41 @@ const samplePlans = [
   },
 ];
 
-const LandingPage: React.FC = () => {
+const PlanesStandalone: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const [companies, setCompanies] = useState(0);
-
-  // animar contador simulado
-  useEffect(() => {
-    const target = 128; // número simulado de empresas
-    let v = 0;
-    const step = Math.max(1, Math.floor(target / 60));
-    const t = setInterval(() => {
-      v += step;
-      if (v >= target) {
-        v = target;
-        clearInterval(t);
-      }
-      setCompanies(v);
-    }, 20);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <main>
       <header className="topbar">
         <div className="logo">Seguridad con tus finanzas</div>
         <div className="actions">
-          <Link to="/planes" className="ui-btn ui-btn--ghost">Planes</Link>
+          <Link to="/" className="ui-btn ui-btn--ghost">Inicio</Link>
           <Link to="/registro" className="ui-btn ui-btn--ghost">Registrarse</Link>
           <Link to="/login" className="ui-btn">Iniciar sesión</Link>
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero específico para planes */}
       <section className="landing-hero">
         <div style={{ maxWidth: 1120, margin: "0 auto", textAlign: "center" }}>
-          <h1 className="ui-title">Crea tu espacio empresarial financiero</h1>
+          <h1 className="ui-title">Elige el plan perfecto para tu empresa</h1>
           <p className="ui-subtitle">
-            Registra tu compañía, elige un plan y obtén acceso inmediato a la consola web y las aplicaciones móviles.
+            Selecciona la opción que mejor se adapte a las necesidades de tu negocio.
           </p>
-
-          <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-            <Link className="ui-btn" to="/registro-empresa">Crear empresa gratis</Link>
-            <Link className="ui-btn ui-btn--ghost" to="/planes">Ver planes</Link>
-          </div>
-
-          <div className="companies" aria-hidden>
-            <div className="count">{companies.toLocaleString()}+</div>
-            <div>Empresas confiando en nuestros servicios</div>
-          </div>
         </div>
       </section>
 
-      {/* Capabilities */}
-      <section>
-        <div className="capabilities" aria-label="capacidades clave">
-          <div className="capability">
-            <span className="icon">📊</span>
-            <h4>Visión financiera</h4>
-            <p>Informes y paneles que muestran la salud de tu negocio en tiempo real.</p>
-          </div>
-          <div className="capability">
-            <span className="icon">⚡</span>
-            <h4>Procesos automáticos</h4>
-            <p>Automatiza cobros, conciliaciones y flujos repetitivos para ahorrar tiempo.</p>
-          </div>
-          <div className="capability">
-            <span className="icon">🔒</span>
-            <h4>Seguridad y control</h4>
-            <p>Control de accesos, roles y auditoría para cumplir normativas.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Plans with celeste background */}
-      <section className="plans-section" aria-labelledby="planes-title">
+      {/* Plans section centrada con animaciones */}
+      <section className="plans-section" aria-labelledby="planes-title" style={{ margin: "40px auto", maxWidth: "1200px" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-          <h2 id="planes-title" style={{ color: "#e6f7ff" }}>Planes y características</h2>
+          <h2 id="planes-title" style={{ color: "#e6f7ff", textAlign: "center", marginBottom: "40px" }}>Planes y características</h2>
           <div className="plans-grid" role="list">
             {samplePlans.map((plan, i) => (
               <article
                 key={plan.id}
                 className={[
                   "plan-card",
-                  plan.id === "profesional" ? "plan-card" : "",
+                  plan.id === "profesional" ? "plan-card--highlight" : "",
                 ].join(" ")}
                 role="listitem"
                 aria-expanded={openIdx === i}
@@ -145,4 +97,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default LandingPage;
+export default PlanesStandalone;

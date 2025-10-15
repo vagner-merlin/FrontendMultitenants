@@ -18,7 +18,7 @@ import type {
 const PLANS: ReadonlyArray<Plan> = [
   { id: "basico", name: "Básico", priceUsd: 0, limits: { maxUsers: 3, maxRequests: 1000, maxStorageGB: 100 } },
   { id: "profesional", name: "Pro", priceUsd: 80, limits: { maxUsers: 20, maxRequests: 25000, maxStorageGB: 300 } },
-  { id: "enterprise", name: "Enterprise", priceUsd: 300, limits: { maxUsers: 100, maxRequests: 60000, maxStorageGB: 1000 } },
+  { id: "personalizado", name: "Personalizado", priceUsd: 300, limits: { maxUsers: 100, maxRequests: 60000, maxStorageGB: 1000 } },
 ] as const;
 
 export function listPlans(): Promise<Plan[]> {
@@ -265,7 +265,7 @@ export function getPlanDetails(id: PlanId): string[] {
       return [...common, "1 espacio de trabajo", "Usuarios limitados", "Reportes mensuales"];
     case "profesional":
       return [...common, "Multi-tenant", "Reportes avanzados y exportes", "Soporte prioritario"];
-    case "enterprise":
+    case "personalizado":
       return [...common, "Integraciones SSO", "SLA personalizado", "Onboarding dedicado"];
     default:
       return common;

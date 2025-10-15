@@ -9,13 +9,22 @@ export type SidebarProps = {
 };
 
 const STORAGE_KEY = "ui.sidebar.collapsed";
+const LOGO_STORAGE_KEY = "ui.company.logo";
 
-const Sidebar: React.FC<SidebarProps> = ({ brand = "Gestion Financiera", collapseOnNavigate = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavigate = false }) => {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === "1";
     } catch {
       return false;
+    }
+  });
+
+  const [companyLogo, setCompanyLogo] = useState<string>(() => {
+    try {
+      return localStorage.getItem(LOGO_STORAGE_KEY) || "";
+    } catch {
+      return "";
     }
   });
 
@@ -57,7 +66,36 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Gestion Financiera", collaps
   return (
     <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`} aria-hidden={collapsed}>
       <div className="sidebar__header">
-        <div className="brand">{brand}</div>
+        <div className="brand" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {companyLogo ? (
+            <img 
+              src={companyLogo} 
+              alt="Logo de la empresa" 
+              style={{ 
+                width: "32px", 
+                height: "32px", 
+                borderRadius: "4px", 
+                objectFit: "cover" 
+              }} 
+            />
+          ) : (
+            <div style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "4px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontSize: "16px",
+              fontWeight: "bold"
+            }}>
+              {brand.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span>{brand}</span>
+        </div>
         <button
           type="button"
           className="sidebar__toggle ui-btn ui-btn--ghost"

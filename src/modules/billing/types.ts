@@ -1,6 +1,6 @@
 // Tipos de planes y suscripción (sin any)
 
-export type PlanId = "basico" | "profesional" | "enterprise";
+export type PlanId = "basico" | "profesional" | "personalizado";
 
 export interface PlanLimits {
   maxUsers: number;

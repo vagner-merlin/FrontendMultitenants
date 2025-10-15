@@ -14,14 +14,22 @@ import AuthPage from "./modules/auth/page";
 import UsersPage from "./modules/usuarios/page";
 import CreditsPage from "./modules/creditos/page";
 import CompanySignupPage from "./modules/landing/company";
-import PlansPage from "./modules/billing/planes_page";
+import CompanyRegisterPage from "./modules/landing/company_register";
+import PlanesStandalone from "./modules/billing/planes_standalone";
 import SubscriptionPage from "./modules/billing/suscripcion_page";
 import CheckoutMockPage from "./modules/billing/checkout_page";
 import TenantGuard from "./modules/tenant/TenantGuard";
-// nuevo import para la pantalla de solicitar
 import SolicitarCredito from "./modules/creditos/solicitar";
 import PagosPage from "./modules/pagos/page";
 import ConfigurationPage from "./modules/configuracion/page";
+import RegistroOnPremise from "./modules/billing/registro_onpremise";
+import CrearUsuarioPage from "./modules/usuarios/crear_usuario";
+import HistorialAuditoriaPage from "./modules/auditoria/historial";
+import ReportesPage from "./modules/reportes/reportes";
+import PersonalizacionPage from "./modules/personalizacion/personalizacion";
+import BackupPage from "./modules/backup/backup";
+import HistorialActividadesPage from "./modules/actividades/historial_simple";
+import DashboardIngresos from "./modules/ingresos/dashboard";
 
 // Helper
 import type { AuthUser } from "./modules/auth/types";
@@ -58,11 +66,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: (
-      <PublicOnly>
-        <AuthPage />
-      </PublicOnly>
-    ),
+    element: <AuthPage />,
   },
   {
     path: "/registro-empresa",
@@ -74,7 +78,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/planes",
-    element: <PlansPage />,
+    element: <PlanesStandalone />,
+  },
+  {
+    path: "/registro-onpremise",
+    element: <RegistroOnPremise />,
+  },
+  {
+    path: "/registro",
+    element: <CompanyRegisterPage />,
   },
   {
     path: "/checkout-mock",
@@ -100,6 +112,13 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Inicio /> },
       { path: "usuarios", element: <UsersPage /> },
+      { path: "crear-usuario", element: <CrearUsuarioPage /> },
+      { path: "actividades", element: <HistorialActividadesPage /> },
+      { path: "auditoria", element: <HistorialAuditoriaPage /> },
+      { path: "reportes", element: <ReportesPage /> },
+      { path: "personalizacion", element: <PersonalizacionPage /> },
+      { path: "ingresos", element: <DashboardIngresos /> },
+      { path: "backup", element: <BackupPage /> },
       {
         path: "creditos",
         element: <CreditsPage />,

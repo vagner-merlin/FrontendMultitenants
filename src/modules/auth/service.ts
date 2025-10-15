@@ -96,7 +96,24 @@ export function humanizeError(e: unknown, fallback = "Error desconocido"): strin
   return fallback;
 }
 
-/* ========= API (BACKEND REAL) ========= */
+/* ========= API (BACKEND REAL + FALLBACK LOCAL) ========= */
+
+// Usuario mock para presentación
+const DEMO_USER: AuthUser = {
+  id: 1,
+  username: "vagner",
+  email: "vagner@gmail.com",
+  nombre_completo: "Vagner Merlin",
+  roles: ["admin"],
+  org_roles: { "1": "administrador" },
+  tenant_id: "1",
+};
+
+const DEMO_CREDENTIALS = {
+  email: "vagner@gmail.com",
+  password: "sssssssssssssssssssss"
+};
+
 /**
  * IMPORTANTE:
  * - Tus endpoints reales (según los logs) son:
@@ -109,15 +126,40 @@ export function humanizeError(e: unknown, fallback = "Error desconocido"): strin
  */
 
 export async function apiLogin(payload: LoginInput): Promise<AuthResponse> {
-  const { data } = await http.post<LoginDTO>("/api/login/", payload, {
-    headers: { Authorization: "" }, // <-- quitar X-Tenant-ID para evitar preflight
-  });
-  return {
-    success: true,
-    message: data.message ?? "OK",
-    token: data.token,
-    user: mapUser(data.user),
-  };
+  // Si coincide con las credenciales demo, usar usuario mock
+  if (payload.email === DEMO_CREDENTIALS.email && payload.password === DEMO_CREDENTIALS.password) {
+    return {
+      success: true,
+      message: "Login exitoso (modo demo)",
+      token: "demo-token-123",
+      user: DEMO_USER,
+    };
+  }
+
+  // Intentar login real con backend
+  try {
+    const { data } = await http.post<LoginDTO>("/api/login/", payload, {
+      headers: { Authorization: "" }, // <-- quitar X-Tenant-ID para evitar preflight
+    });
+    return {
+      success: true,
+      message: data.message ?? "OK",
+      token: data.token,
+      user: mapUser(data.user),
+    };
+  } catch (error) {
+    // Si el backend no está disponible, usar credenciales demo como fallback
+    console.warn("Backend no disponible, usando modo demo", error);
+    if (payload.email === DEMO_CREDENTIALS.email && payload.password === DEMO_CREDENTIALS.password) {
+      return {
+        success: true,
+        message: "Login exitoso (fallback demo)",
+        token: "demo-token-123",
+        user: DEMO_USER,
+      };
+    }
+    throw error;
+  }
 }
 
 export async function apiRegister(payload: RegisterInput): Promise<AuthResponse> {
@@ -133,13 +175,37 @@ export async function apiRegister(payload: RegisterInput): Promise<AuthResponse>
 }
 
 export async function apiMe(): Promise<AuthResponse> {
-  const { data } = await http.get<ProfileDTO>("/api/profile/");
-  return {
-    success: true,
-    message: data.message ?? "OK",
-    user: mapUser(data.user),
-    tenant_id: data?.user?.tenant_id ?? null,
-  };
+  // Si hay token demo, retornar usuario demo
+  const token = localStorage.getItem("auth.token");
+  if (token === "demo-token-123") {
+    return {
+      success: true,
+      message: "Profile OK (modo demo)",
+      user: DEMO_USER,
+      tenant_id: DEMO_USER.tenant_id,
+    };
+  }
+
+  try {
+    const { data } = await http.get<ProfileDTO>("/api/profile/");
+    return {
+      success: true,
+      message: data.message ?? "OK",
+      user: mapUser(data.user),
+      tenant_id: data?.user?.tenant_id ?? null,
+    };
+  } catch (error) {
+    // Si el backend no está disponible y hay token demo, usar usuario demo
+    if (token === "demo-token-123") {
+      return {
+        success: true,
+        message: "Profile OK (fallback demo)",
+        user: DEMO_USER,
+        tenant_id: DEMO_USER.tenant_id,
+      };
+    }
+    throw error;
+  }
 }
 
 export async function apiLogout(): Promise<void> {

@@ -23,7 +23,13 @@ const PlanCard: React.FC<{
   idx: number;
 }> = ({ plan, onStart, onToggle, isOpen, idx }) => {
   const navigate = useNavigate();
-  const onBuy = (id: PlanId) => navigate(`/checkout-mock?plan=${id}`);
+  const onBuy = (id: PlanId) => {
+    if (id === "personalizado") {
+      navigate("/registro-onpremise");
+    } else {
+      navigate(`/checkout-mock?plan=${id}`);
+    }
+  };
 
   // details es string[] — tipado explícito
   const details: string[] = getPlanDetails(plan.id);
