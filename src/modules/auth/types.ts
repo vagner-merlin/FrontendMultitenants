@@ -116,5 +116,17 @@ export type AuthCtx = {
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (payload: RegisterInput) => Promise<AuthResponse>;
+  registerCompanyAndUser: (payload: {
+    razon_social: string;
+    email_contacto: string;
+    nombre_comercial: string;
+    imagen_url_empresa: string;
+    username: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    imagen_url_perfil: string;
+  }) => Promise<AuthResponse & { empresa_id?: number }>;
   logout: () => Promise<void>;
 };

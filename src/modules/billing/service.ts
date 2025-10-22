@@ -31,6 +31,48 @@ export function getPlanById(id: PlanId): Plan {
   return p;
 }
 
+// Nueva función para crear suscripción
+export async function createSubscription(data: {
+  empresa: number;
+  fecha_fin: string;
+  enum_plan: string;
+  enum_estado: string;
+}): Promise<{
+  id: number;
+  empresa: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  enum_plan: string;
+  enum_estado: string;
+}> {
+  try {
+    console.log("Enviando solicitud POST a /api/suscripcion/ con datos:", data);
+    
+    const response = await http.post("/api/suscripcion/", data, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    console.log("Respuesta recibida:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error al crear suscripción:", error);
+    
+    if (error.response) {
+      console.error("Código de estado:", error.response.status);
+      console.error("Datos del error:", error.response.data);
+      console.error("Headers:", error.response.headers);
+    } else if (error.request) {
+      console.error("No se recibió respuesta:", error.request);
+    } else {
+      console.error("Error de configuración:", error.message);
+    }
+    
+    throw error;
+  }
+}
+
 /* Storage keys locales */
 const LS_SUB_KEY = "billing.subscription";
 const LS_PAYMENTS_KEY = "billing.payments";

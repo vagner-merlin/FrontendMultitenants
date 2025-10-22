@@ -1,103 +1,58 @@
 // src/modules/landing/company_register.tsx
-import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { listPlans } from "../billing/service";
-import type { Plan } from "../billing/types";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/service";
 import "../../styles/auth.css";
 
-// Tipos basados en las tablas del diagrama
-interface InstitutionData {
+// Tipos basados en el endpoint POST /api/register/empresa-user/
+interface RegistrationForm {
+  // Datos de la empresa
   razon_social: string;
   email_contacto: string;
-  fecha_registro: string;
-  nombre: string;
-  logo_url?: string;
-}
-
-interface DomainData {
-  id_organization: string;
-  subdomain: string;
-  is_primary: boolean;
-}
-
-interface AdminUserData {
-  password: string;
-  is_superuser: boolean;
+  nombre_comercial: string;
+  imagen_url_empresa: string;
+  
+  // Datos del usuario administrador
   username: string;
+  password: string;
+  confirm_password: string;
   first_name: string;
   last_name: string;
   email: string;
-  is_staff: boolean;
-  is_active: boolean;
-  date_joined: string;
-}
-
-interface RegistrationForm extends InstitutionData, DomainData, AdminUserData {
-  confirm_password: string;
+  imagen_url_perfil: string;
+  
+  // Plan seleccionado (para después del registro)
   selected_plan: string;
 }
 
 const CompanyRegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { registerCompanyAndUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "" }>({
     text: "",
     type: "",
   });
 
-  // Cargar planes al montar el componente
-  useEffect(() => {
-    const loadPlans = async () => {
-      try {
-        const plansList = await listPlans();
-        setPlans(plansList);
-        if (plansList.length > 0) {
-          const defaultPlan = plansList[0].id;
-          setSelectedPlan(defaultPlan);
-          setForm(prev => ({ ...prev, selected_plan: defaultPlan }));
-        }
-      } catch (error) {
-        console.error("Error cargando planes:", error);
-      }
-    };
-    loadPlans();
-  }, []);
-
   const [form, setForm] = useState<RegistrationForm>({
-    // Datos de la institución
+    // Datos de la empresa
     razon_social: "",
     email_contacto: "",
-    fecha_registro: new Date().toISOString().split('T')[0],
-    nombre: "",
-    logo_url: "",
-    
-    // Datos del dominio
-    id_organization: "",
-    subdomain: "",
-    is_primary: true,
+    nombre_comercial: "",
+    imagen_url_empresa: "",
     
     // Datos del usuario administrador
+    username: "",
     password: "",
     confirm_password: "",
-    is_superuser: false,
-    username: "",
     first_name: "",
     last_name: "",
     email: "",
-    is_staff: true,
-    is_active: true,
-    date_joined: new Date().toISOString(),
+    imagen_url_perfil: "",
     
     // Plan seleccionado
-    selected_plan: "",
+    selected_plan: "basico", // Plan por defecto
   });
-
-  const handleSelectPlan = (planId: string) => {
-    setSelectedPlan(planId);
-    setForm(prev => ({ ...prev, selected_plan: planId }));
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -109,12 +64,10 @@ const CompanyRegisterPage: React.FC = () => {
     }));
 
     // Auto-completar campos relacionados
-    if (name === "nombre") {
-      const slug = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    if (name === "nombre_comercial" && !form.razon_social) {
       setForm(prev => ({
         ...prev,
-        subdomain: slug,
-        razon_social: prev.razon_social || value
+        razon_social: value
       }));
     }
 
@@ -127,15 +80,24 @@ const CompanyRegisterPage: React.FC = () => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: "imagen_url_empresa" | "imagen_url_perfil") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Por ahora solo guardamos el nombre del archivo
+      // En un caso real, aquí subirías la imagen a un servidor y obtendrías la URL
+      const fakeUrl = `https://ejemplo.com/uploads/${file.name}`;
+      setForm(prev => ({
+        ...prev,
+        [field]: fakeUrl
+      }));
+    }
+  };
+
   const validateForm = (): string | null => {
-    // Validar datos de la institución
-    if (!form.nombre.trim()) return "El nombre de la empresa es requerido";
+    // Validar datos de la empresa
+    if (!form.nombre_comercial.trim()) return "El nombre comercial es requerido";
     if (!form.razon_social.trim()) return "La razón social es requerida";
     if (!form.email_contacto.trim()) return "El email de contacto es requerido";
-    
-    // Validar subdomain
-    if (!form.subdomain.trim()) return "El subdominio es requerido";
-    if (!/^[a-z0-9-]+$/.test(form.subdomain)) return "El subdominio solo puede contener letras, números y guiones";
     
     // Validar datos del administrador
     if (!form.first_name.trim()) return "El nombre del administrador es requerido";
@@ -161,42 +123,54 @@ const CompanyRegisterPage: React.FC = () => {
         return;
       }
 
-      // Aquí enviarías los datos al backend
-      // Por ahora simulamos el registro
-      console.log("Datos de registro:", {
-        institution: {
-          razon_social: form.razon_social,
-          email_contacto: form.email_contacto,
-          fecha_registro: form.fecha_registro,
-          nombre: form.nombre,
-          logo_url: form.logo_url,
-        },
-        domain: {
-          subdomain: form.subdomain,
-          is_primary: form.is_primary,
-        },
-        admin_user: {
-          username: form.username,
-          first_name: form.first_name,
-          last_name: form.last_name,
-          email: form.email,
-          password: form.password,
-          is_staff: form.is_staff,
-          is_active: form.is_active,
-          is_superuser: form.is_superuser,
-          date_joined: form.date_joined,
-        },
-        selected_plan: form.selected_plan
-      });
+      // Preparar datos para el endpoint
+      const registrationData = {
+        razon_social: form.razon_social,
+        email_contacto: form.email_contacto,
+        nombre_comercial: form.nombre_comercial,
+        imagen_url_empresa: form.imagen_url_empresa,
+        username: form.username,
+        password: form.password,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        imagen_url_perfil: form.imagen_url_perfil,
+      };
 
-      setMessage({ text: "Registro exitoso. Redirigiendo...", type: "success" });
+      console.log("Datos de registro:", registrationData);
+
+      // Llamar al servicio de registro
+      const response = await registerCompanyAndUser(registrationData);
       
-      // Simular delay y redirigir
-      setTimeout(() => {
-        navigate("/login?message=Registro exitoso, puede iniciar sesión");
-      }, 2000);
+      console.log("Respuesta del registro:", response);
+      
+      if (response.success && response.empresa_id) {
+        setMessage({ text: "Registro exitoso. Redirigiendo a selección de plan...", type: "success" });
+        
+        console.log("Redirigiendo a planes-seleccion con:", {
+          empresa_id: response.empresa_id,
+          selectedPlan: form.selected_plan,
+          user: response.user
+        });
+        
+        // Redirigir a selección de plan con los datos necesarios
+        setTimeout(() => {
+          navigate("/planes-seleccion", { 
+            state: { 
+              empresa_id: response.empresa_id,
+              selectedPlan: form.selected_plan,
+              user: response.user 
+            },
+            replace: true
+          });
+        }, 1500);
+      } else {
+        console.error("Error en respuesta:", response);
+        setMessage({ text: response.message || "Error al registrar empresa", type: "error" });
+      }
 
     } catch (error) {
+      console.error("Error en registro:", error);
       setMessage({ text: "Error al registrar. Intente nuevamente.", type: "error" });
     } finally {
       setLoading(false);
@@ -205,53 +179,7 @@ const CompanyRegisterPage: React.FC = () => {
 
   return (
     <section className="auth-container">
-      <div className="auth-box-modern" style={{ gridTemplateColumns: "360px 1fr", display: "grid", gap: 20 }}>
-        {/* Sidebar con planes */}
-        <aside className="plans-side">
-          <div className="plans-side__header">
-            <h4>Selecciona un plan</h4>
-            <p className="muted">Elige el plan que mejor se adapte a tu empresa.</p>
-          </div>
-
-          <div className="plans-side__list">
-            {plans.map((p) => {
-              const active = selectedPlan === p.id;
-              return (
-                <div
-                  key={p.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSelectPlan(p.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSelectPlan(p.id); }}
-                  className={[
-                    "plan-side-card",
-                    `plan-side-card--${p.id}`,
-                    active ? "is-active" : "",
-                  ].join(" ")}
-                  aria-pressed={active}
-                >
-                  <div className="psc-head">
-                    <div>
-                      <strong className="psc-title">{p.name}</strong>
-                      <div className="psc-sub">{p.priceUsd === 0 ? "Gratis · 14 días" : `$${p.priceUsd}/mes`}</div>
-                    </div>
-                    {p.id === "profesional" && <div className="psc-badge">Recomendado</div>}
-                  </div>
-                  <ul className="psc-list">
-                    <li>Usuarios: {p.limits.maxUsers}</li>
-                    <li>Solicitudes/mes: {p.limits.maxRequests.toLocaleString()}</li>
-                    <li>{p.limits.maxStorageGB} GB almacenamiento</li>
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{ marginTop: "auto", paddingTop: 12 }}>
-            <Link to="/planes" className="ui-btn ui-btn--ghost">Ver todos los planes</Link>
-          </div>
-        </aside>
-
+      <div className="auth-box-modern" style={{ maxWidth: "600px", margin: "0 auto" }}>
         {/* Formulario principal */}
         <div className="auth-right" style={{ width: "100%" }}>
           <form className="auth-form-modern" onSubmit={handleSubmit} noValidate>
@@ -260,17 +188,17 @@ const CompanyRegisterPage: React.FC = () => {
 
             {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
 
-            {/* Datos de la Institución */}
+            {/* Datos de la Empresa */}
             <fieldset style={{ border: "1px solid #e2e8f0", padding: "16px", borderRadius: "6px", marginBottom: "16px" }}>
-              <legend style={{ fontWeight: "bold", color: "#1f2937" }}>📏 Datos de la Empresa</legend>
+              <legend style={{ fontWeight: "bold", color: "#1f2937" }}>🏢 Datos de la Empresa</legend>
               
               <div className="input-group">
                 <span className="input-icon">🏢</span>
                 <input
                   type="text"
-                  name="nombre"
-                  placeholder="Nombre de la empresa *"
-                  value={form.nombre}
+                  name="nombre_comercial"
+                  placeholder="Nombre comercial *"
+                  value={form.nombre_comercial}
                   onChange={handleChange}
                   required
                 />
@@ -301,18 +229,18 @@ const CompanyRegisterPage: React.FC = () => {
               </div>
 
               <div className="input-group">
-                <span className="input-icon">🌐</span>
-                <input
-                  type="text"
-                  name="subdomain"
-                  placeholder="Subdominio (ej: miempresa) *"
-                  value={form.subdomain}
-                  onChange={handleChange}
-                  required
-                />
-                <small style={{ fontSize: "12px", color: "#6b7280" }}>
-                  Su dominio será: {form.subdomain || "subdominio"}.tuapp.com
-                </small>
+                <span className="input-icon">🖼️</span>
+                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "imagen_url_empresa")}
+                    style={{ display: "none" }}
+                  />
+                  <span style={{ color: "#6b7280", fontSize: "14px" }}>
+                    {form.imagen_url_empresa ? "Logo cargado ✓" : "Subir logo de la empresa"}
+                  </span>
+                </label>
               </div>
             </fieldset>
 
@@ -394,6 +322,21 @@ const CompanyRegisterPage: React.FC = () => {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="input-group">
+                <span className="input-icon">🖼️</span>
+                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "imagen_url_perfil")}
+                    style={{ display: "none" }}
+                  />
+                  <span style={{ color: "#6b7280", fontSize: "14px" }}>
+                    {form.imagen_url_perfil ? "Foto de perfil cargada ✓" : "Subir foto de perfil"}
+                  </span>
+                </label>
               </div>
             </fieldset>
 

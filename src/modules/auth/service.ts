@@ -43,6 +43,8 @@ function mapUser(u: UserDTO): AuthUser {
 /** Guarda token, usuario y metadatos para que el resto del front los lea */
 export async function persistSession(token: string, user: AuthUser): Promise<void> {
   try {
+    console.log("💾 Guardando sesión:", { token: token.substring(0, 10) + "...", user: user.email });
+    
     localStorage.setItem("auth.token", token);
     localStorage.setItem("auth.me", JSON.stringify(user));
     
@@ -57,6 +59,8 @@ export async function persistSession(token: string, user: AuthUser): Promise<voi
       user,
       tenant_id: user.tenant_id
     }));
+    
+    console.log("✅ Sesión guardada exitosamente");
   } catch (error) {
     console.error("Error al persistir sesión:", error);
   }
@@ -136,20 +140,44 @@ export async function apiLogin(payload: LoginInput): Promise<AuthResponse> {
     };
   }
 
-  // Intentar login real con backend
-  try {
-    const { data } = await http.post<LoginDTO>("/api/login/", payload, {
-      headers: { Authorization: "" }, // <-- quitar X-Tenant-ID para evitar preflight
-    });
+  // Permitir login en modo demo si el usuario usa el correo del usuario demo
+  // Esto ayuda cuando el backend no está disponible y quieres usar tu email
+  // para navegar localmente. No cambia la lógica de backend real.
+  if (payload.email === DEMO_USER.email) {
     return {
       success: true,
-      message: data.message ?? "OK",
+      message: "Login exitoso (modo demo por email)",
+      token: "demo-token-123",
+      user: DEMO_USER,
+    };
+  }
+
+  // Intentar login real con backend
+  try {
+    console.log("Intentando login con:", payload);
+    const { data } = await http.post<LoginDTO>("/api/auth/login/", payload, {
+      headers: { Authorization: "" }, // <-- quitar X-Tenant-ID para evitar preflight
+    });
+    
+    console.log("Respuesta del login:", data);
+    
+    return {
+      success: true,
+      message: data.message ?? "Login exitoso",
       token: data.token,
       user: mapUser(data.user),
     };
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error en login:", error);
+    
+    // Log detallado del error
+    if (error.response) {
+      console.error("Error response:", error.response.data);
+      console.error("Error status:", error.response.status);
+    }
+    
     // Si el backend no está disponible, usar credenciales demo como fallback
-    console.warn("Backend no disponible, usando modo demo", error);
+    console.warn("Backend no disponible o error, usando modo demo", error);
     if (payload.email === DEMO_CREDENTIALS.email && payload.password === DEMO_CREDENTIALS.password) {
       return {
         success: true,
@@ -172,6 +200,49 @@ export async function apiRegister(payload: RegisterInput): Promise<AuthResponse>
     token: data.token,
     user: mapUser(data.user),
   };
+}
+
+// Nueva función para registrar empresa y usuario
+export async function apiRegisterCompanyAndUser(payload: {
+  razon_social: string;
+  email_contacto: string;
+  nombre_comercial: string;
+  imagen_url_empresa: string;
+  username: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  imagen_url_perfil: string;
+}): Promise<AuthResponse & { empresa_id?: number }> {
+  try {
+    console.log("Enviando solicitud a /api/register/empresa-user/ con payload:", payload);
+    
+    const { data } = await http.post<{
+      token: string;
+      user: UserDTO;
+      empresa_id: number;
+      message?: string;
+    }>("/api/register/empresa-user/", payload, {
+      headers: { Authorization: "" },
+    });
+    
+    console.log("Respuesta recibida del backend:", data);
+    
+    const result = {
+      success: true,
+      message: data.message ?? "Registro exitoso",
+      token: data.token,
+      user: mapUser(data.user),
+      empresa_id: data.empresa_id,
+    };
+    
+    console.log("Resultado procesado:", result);
+    return result;
+  } catch (error) {
+    console.error("Error en apiRegisterCompanyAndUser:", error);
+    throw error;
+  }
 }
 
 export async function apiMe(): Promise<AuthResponse> {
@@ -211,6 +282,17 @@ export async function apiMe(): Promise<AuthResponse> {
 export async function apiLogout(): Promise<void> {
   try {
     await http.post("/api/logout/", {}, { headers: { Authorization: "" } }); // <-- quitar X-Tenant-ID
+  } finally {
+    clearSession(); // limpia local pase lo que pase
+  }
+}
+
+// Nueva función de logout que envía el token en el body
+export async function apiLogoutWithToken(token: string): Promise<void> {
+  try {
+    await http.post("/api/auth/logout/", { token }, {
+      headers: { Authorization: "" },
+    });
   } finally {
     clearSession(); // limpia local pase lo que pase
   }
@@ -274,16 +356,57 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
   };
 
+  // Nueva función para registrar empresa y usuario
+  const registerCompanyAndUser = async (payload: {
+    razon_social: string;
+    email_contacto: string;
+    nombre_comercial: string;
+    imagen_url_empresa: string;
+    username: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    imagen_url_perfil: string;
+  }): Promise<AuthResponse & { empresa_id?: number }> => {
+    try {
+      console.log("Llamando a apiRegisterCompanyAndUser con:", payload);
+      const res = await apiRegisterCompanyAndUser(payload);
+      console.log("Respuesta de apiRegisterCompanyAndUser:", res);
+      
+      if (res.success && res.token && res.user) {
+        await persistSession(res.token, res.user);
+        setUser(res.user);
+      }
+      return res;
+    } catch (e) {
+      console.error("Error en registerCompanyAndUser:", e);
+      const msg = humanizeError(e, "No se pudo registrar la empresa.");
+      return { success: false, message: msg };
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
-      await apiLogout();
+      const token = localStorage.getItem("auth.token");
+      console.log("🚪 Cerrando sesión con token:", token ? token.substring(0, 10) + "..." : "sin token");
+      
+      if (token) {
+        console.log("Enviando logout con token al endpoint /api/auth/logout/");
+        await apiLogoutWithToken(token);
+      } else {
+        console.log("Enviando logout sin token al endpoint /api/logout/");
+        await apiLogout();
+      }
+      
+      console.log("✅ Logout exitoso");
     } finally {
       setUser(null);
     }
   };
 
   const value = useMemo<AuthCtx>(
-    () => ({ user, loading, login, register, logout }),
+    () => ({ user, loading, login, register, registerCompanyAndUser, logout }),
     [user, loading]
   );
 

@@ -14,8 +14,6 @@ const AuthPage: React.FC = () => {
     return params.get("redirect") || "/app";
   };
 
-  const strongEnough = (s: string) => s.length >= 8;
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "" | "success" | "error" }>({ text: "", type: "" });
   const [remember, setRemember] = useState(true);
@@ -23,7 +21,7 @@ const AuthPage: React.FC = () => {
 
   const [loginData, setLoginData] = useState<{ email: string; password: string }>({ 
     email: "vagner@gmail.com", 
-    password: "adminn2112" 
+    password: "" 
   });
 
   const normalizeEmail = (s: string) => s.trim().toLowerCase();
@@ -37,23 +35,40 @@ const AuthPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setMessage({ text: "", type: "" });
+    
     try {
       const email = normalizeEmail(loginData.email);
-      // Para modo demo, permitir login sin validación estricta
-      if (email !== "vagner@gmail.com" && !strongEnough(loginData.password)) {
-        setMessage({ text: "La contraseña debe tener al menos 8 caracteres.", type: "error" });
+      const password = loginData.password;
+      
+      // Validaciones básicas
+      if (!email) {
+        setMessage({ text: "Por favor ingrese su email.", type: "error" });
         return;
       }
-      const res = await login(email, loginData.password);
+      
+      if (!password) {
+        setMessage({ text: "Por favor ingrese su contraseña.", type: "error" });
+        return;
+      }
+      
+      console.log("Intentando login con:", { email, password: "***" });
+      
+      const res = await login(email, password);
+      
+      console.log("Resultado del login:", res);
+      
       setMessage({ text: res.message, type: res.success ? "success" : "error" });
+      
       if (res.success) {
+        console.log("Login exitoso, redirigiendo a:", getRedirect());
         // La función login del contexto ya se encarga de persistir la sesión
         // Pequeño delay para asegurar que el contexto se actualice
         setTimeout(() => {
           navigate(getRedirect(), { replace: true });
-        }, 100);
+        }, 1000);
       }
-    } catch {
+    } catch (error: any) {
+      console.error("Error en handleLogin:", error);
       setMessage({ text: "No se pudo iniciar sesión. Intenta nuevamente.", type: "error" });
     } finally {
       setLoading(false);
@@ -107,7 +122,7 @@ const AuthPage: React.FC = () => {
             <h2>Iniciar Sesión</h2>
             <p>Ingrese sus credenciales</p>
             
-            {/* Indicador de modo demo */}
+            {/* Indicador de endpoint actual */}
             <div style={{
               background: "#e3f2fd",
               padding: "8px 12px",
@@ -117,7 +132,48 @@ const AuthPage: React.FC = () => {
               marginBottom: "16px",
               border: "1px solid #bbdefb"
             }}>
-              🎯 <strong>Modo Demo:</strong> vagner@gmail.com / adminn2112
+              🎯 <strong>Endpoint:</strong> POST /api/auth/login/
+            </div>
+
+            {/* Botones de prueba rápida */}
+            <div style={{ 
+              display: "flex", 
+              gap: "8px", 
+              marginBottom: "16px",
+              padding: "12px",
+              backgroundColor: "#fef3c7",
+              borderRadius: "6px"
+            }}>
+              <button
+                type="button"
+                onClick={() => setLoginData({ email: "vagner@gmail.com", password: "tu_password_aqui" })}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: "11px",
+                  backgroundColor: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                Usar credentials demo
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginData({ email: "", password: "" })}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: "11px",
+                  backgroundColor: "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                Limpiar
+              </button>
             </div>
 
             {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
